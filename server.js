@@ -17,6 +17,33 @@ app.use(express.json());
 
 // Schema & model
 
+const TaskSchema = new mongoose.Schema({
+  title: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  link: {
+    type: String,
+  },
+  tags: {
+    type: Array,
+  },
+  dueDate: {
+    type: String,
+  },
+  assignee: {
+    type: String,
+  },
+  column: {
+    type: String,
+  },
+  comments: {
+    type: Array,
+  },
+});
+
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -51,11 +78,94 @@ const ColumnSchema = new mongoose.Schema({
   },
 });
 
+const Task = mongoose.model("Task", TaskSchema);
 const User = mongoose.model("User", UserSchema);
 const Tag = mongoose.model("Tag", TagSchema);
 const Column = mongoose.model("Column", ColumnSchema);
 
 // Endpoints
+
+// TASKS
+
+app.get("/tasks", async (req, res) => {
+  const { assignee, column, tags, page, perPage } = req.query;
+
+  const query = {
+    ...(assignee && { assignee: new RegExp(`^${assignee}`, "i") }),
+    ...(column && { column: new RegExp(column, "i") }),
+    ...(tags && { tags: new RegExp(tags, "i") }),
+  };
+
+  const pageParam = page || 1;
+  const perPageParam = perPage || 100;
+
+  try {
+    const tasks = await Task.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $skip: (+pageParam - 1) * +perPageParam,
+      },
+      {
+        $limit: +perPageParam,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "assignee",
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      data: tasks,
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
+
+app.post("/tasks", async (req, res) => {
+  const {
+    title,
+    description,
+    link,
+    tags,
+    dueDate,
+    assignee,
+    column,
+    comments,
+  } = req.body;
+
+  try {
+    const task = await new Task({
+      title,
+      description,
+      link,
+      tags,
+      dueDate,
+      assignee,
+      column,
+      comments,
+    }).save();
+    res.status(201).json({
+      data: task,
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
 
 // USERS
 
@@ -80,6 +190,36 @@ app.post("/users", async (req, res) => {
   try {
     const user = await new User({ name, description, imageURL }).save();
     res.status(201).json({
+      data: user,
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
+
+app.put("/users/:userID", async (req, res) => {
+  const { userID } = req.params;
+  const { name, description, imageURL } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      userID,
+      {
+        name,
+        description,
+        imageURL,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    res.status(200).json({
       data: user,
       success: true,
     });
@@ -125,13 +265,13 @@ app.post("/tags", async (req, res) => {
   }
 });
 
-app.put("/tags/:tagId", async (req, res) => {
-  const { tagId } = req.params;
+app.put("/tags/:tagID", async (req, res) => {
+  const { tagID } = req.params;
   const { name, color } = req.body;
 
   try {
     const tag = await Tag.findByIdAndUpdate(
-      tagId,
+      tagID,
       {
         name,
         color,
@@ -188,13 +328,13 @@ app.post("/columns", async (req, res) => {
   }
 });
 
-app.put("/columns/:columnId", async (req, res) => {
+app.put("/columns/:columnID", async (req, res) => {
   const { name } = req.body;
-  const { columnId } = req.params;
+  const { columnID } = req.params;
 
   try {
     const column = await Column.findByIdAndUpdate(
-      columnId,
+      columnID,
       {
         name,
       },
