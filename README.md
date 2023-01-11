@@ -1,5 +1,3 @@
-# Sprint 8 project
-
 ## Documentation
 
 ## 1. **GET** /tasks
