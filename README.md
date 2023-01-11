@@ -1,3 +1,9 @@
+## List of technologies used in project:
+
+- Node.js
+- Express.js
+- MongoDB
+
 ## Documentation
 
 ## 1. **GET** /tasks
