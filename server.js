@@ -2,24 +2,30 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import cloudinaryFramework from 'cloudinary';
-import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinaryFramework from "cloudinary";
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
 const cloudinary = cloudinaryFramework.v2;
 
+// cloudinary.config({
+//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+//   api_key: process.env.CLOUDINARY_API_KEY,
+//   api_secret: process.env.CLOUDINARY_API_SECRET,
+// });
+
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: "dxoaijxeu",
+  api_key: "234932964887826",
+  api_secret: "txTyDzvgE6c6gmzSQfiSwnuQKB8",
 });
 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: 'pets',
-    allowedFormats: ['jpg', 'png'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }],
+    folder: "users",
+    allowedFormats: ["jpg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
   },
 });
 
@@ -206,11 +212,36 @@ app.get("/users", async (req, res) => {
   }
 });
 
-app.post("/users", async (req, res) => {
+// post user v1
+
+// app.post("/users", async (req, res) => {
+//   const { name, description, imageURL } = req.body;
+
+//   try {
+//     const user = await new User({ name, description, imageURL }).save();
+//     res.status(201).json({
+//       data: user,
+//       success: true,
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       data: error,
+//       success: false,
+//     });
+//   }
+// });
+
+// post user v2
+
+app.post("/users", parser.single("image"), async (req, res) => {
   const { name, description, imageURL } = req.body;
 
   try {
-    const user = await new User({ name, description, imageURL }).save();
+    const user = await new User({
+      name,
+      description,
+      imageURL: req.file.path,
+    }).save();
     res.status(201).json({
       data: user,
       success: true,
@@ -223,7 +254,45 @@ app.post("/users", async (req, res) => {
   }
 });
 
-app.put("/users/:userID", async (req, res) => {
+// app.post("/users", parser.single("image"), async (req, res) => {
+//   res.json({ imageURL: req.file.path, imageId: req.file.filename });
+// });
+
+// put user v1
+
+// app.put("/users/:userID", async (req, res) => {
+//   const { userID } = req.params;
+//   const { name, description, imageURL } = req.body;
+
+//   try {
+//     const user = await User.findByIdAndUpdate(
+//       userID,
+//       {
+//         name,
+//         description,
+//         imageURL,
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     );
+
+//     res.status(200).json({
+//       data: user,
+//       success: true,
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       data: error,
+//       success: false,
+//     });
+//   }
+// });
+
+// put user v2
+
+app.put("/users/:userID", parser.single("image"), async (req, res) => {
   const { userID } = req.params;
   const { name, description, imageURL } = req.body;
 
@@ -233,7 +302,7 @@ app.put("/users/:userID", async (req, res) => {
       {
         name,
         description,
-        imageURL,
+        imageURL: req.file.path,
       },
       {
         new: true,
