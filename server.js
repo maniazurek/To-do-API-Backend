@@ -122,6 +122,8 @@ const Column = mongoose.model("Column", ColumnSchema);
 
 // TASKS
 
+// taks get
+
 app.get("/tasks", async (req, res) => {
   const { assignee, column, tags, page, perPage } = req.query;
 
@@ -183,6 +185,8 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
+// taks post
+
 app.post("/tasks", async (req, res) => {
   const {
     title,
@@ -207,6 +211,51 @@ app.post("/tasks", async (req, res) => {
       comments,
     }).save();
     res.status(201).json({
+      data: task,
+      success: true,
+    });
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
+
+// taks put
+
+app.put("/tasks/:taskID", async (req, res) => {
+  const { taskID } = req.params;
+  const {
+    title,
+    description,
+    link,
+    tags,
+    dueDate,
+    assignee,
+    column,
+    comments,
+  } = req.body;
+
+  try {
+    const task = await Task.findByIdAndUpdate(
+      taskID,
+      {
+        title,
+        description,
+        link,
+        tags,
+        dueDate,
+        assignee,
+        column,
+        comments,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    res.status(200).json({
       data: task,
       success: true,
     });
