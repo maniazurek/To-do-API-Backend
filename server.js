@@ -55,21 +55,28 @@ const TaskSchema = new mongoose.Schema({
   link: {
     type: String,
   },
-  tags: {
-    type: Array,
-  },
+  tags: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tag",
+    },
+  ],
   dueDate: {
-    type: String,
+    type: Date,
   },
   assignee: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   column: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Column",
   },
-  comments: {
-    type: Array,
-  },
+  comments: [
+    {
+      type: String,
+    },
+  ],
 });
 
 const UserSchema = new mongoose.Schema({
@@ -144,6 +151,22 @@ app.get("/tasks", async (req, res) => {
           localField: "user",
           foreignField: "_id",
           as: "assignee",
+        },
+      },
+      {
+        $lookup: {
+          from: "columns",
+          localField: "column",
+          foreignField: "_id",
+          as: "column",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "tag",
+          foreignField: "_id",
+          as: "tags",
         },
       },
     ]);
