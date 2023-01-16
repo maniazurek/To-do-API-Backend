@@ -55,16 +55,16 @@ const TaskSchema = new mongoose.Schema({
   link: {
     type: String,
   },
-  tags: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Tag",
-    },
-  ],
+  // tags: [
+  //   {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: "Tag",
+  //   },
+  // ],
   dueDate: {
     type: Date,
   },
-  assignee: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
@@ -125,10 +125,10 @@ const Column = mongoose.model("Column", ColumnSchema);
 // taks get
 
 app.get("/tasks", async (req, res) => {
-  const { assignee, column, tags, page, perPage } = req.query;
+  const { user, column, tags, page, perPage } = req.query;
 
   const query = {
-    ...(assignee && { assignee: new RegExp(`^${assignee}`, "i") }),
+    ...(user && { user: new RegExp(`^${user}`, "i") }),
     ...(column && { column: new RegExp(column, "i") }),
     ...(tags && { tags: new RegExp(tags, "i") }),
   };
@@ -152,7 +152,7 @@ app.get("/tasks", async (req, res) => {
           from: "users",
           localField: "user",
           foreignField: "_id",
-          as: "assignee",
+          as: "user",
         },
       },
       {
@@ -163,14 +163,14 @@ app.get("/tasks", async (req, res) => {
           as: "column",
         },
       },
-      {
-        $lookup: {
-          from: "tags",
-          localField: "tag",
-          foreignField: "_id",
-          as: "tags",
-        },
-      },
+      // {
+      //   $lookup: {
+      //     from: "tags",
+      //     localField: "tag",
+      //     foreignField: "_id",
+      //     as: "tags",
+      //   },
+      // },
     ]);
 
     res.status(200).json({
@@ -192,24 +192,27 @@ app.post("/tasks", async (req, res) => {
     title,
     description,
     link,
-    tags,
+    // tagID,
     dueDate,
-    assignee,
-    column,
+    userID,
+    columnID,
     comments,
   } = req.body;
 
   try {
+    const user = await User.findById(userID);
+    const column = await Column.findById(columnID);
+    // const tags = await Tag.find(tagID);
     const task = await new Task({
       title,
       description,
       link,
-      tags,
       dueDate,
-      assignee,
+      user,
       column,
       comments,
     }).save();
+
     res.status(201).json({
       data: task,
       success: true,
@@ -230,23 +233,25 @@ app.put("/tasks/:taskID", async (req, res) => {
     title,
     description,
     link,
-    tags,
+    // tagID,
     dueDate,
-    assignee,
-    column,
+    userID,
+    columnID,
     comments,
   } = req.body;
 
   try {
+    const user = await User.findById(userID);
+    const column = await Column.findById(columnID);
     const task = await Task.findByIdAndUpdate(
       taskID,
       {
         title,
         description,
         link,
-        tags,
+        // tags,
         dueDate,
-        assignee,
+        user,
         column,
         comments,
       },
