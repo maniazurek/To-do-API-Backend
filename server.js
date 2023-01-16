@@ -55,14 +55,15 @@ const TaskSchema = new mongoose.Schema({
   link: {
     type: String,
   },
-  // tags: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: "Tag",
-  //   },
-  // ],
+  tags: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tag",
+    },
+  ],
   dueDate: {
     type: Date,
+    default: Date.now,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -163,14 +164,14 @@ app.get("/tasks", async (req, res) => {
           as: "column",
         },
       },
-      // {
-      //   $lookup: {
-      //     from: "tags",
-      //     localField: "tag",
-      //     foreignField: "_id",
-      //     as: "tags",
-      //   },
-      // },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "tag",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
     ]);
 
     res.status(200).json({
@@ -192,7 +193,7 @@ app.post("/tasks", async (req, res) => {
     title,
     description,
     link,
-    // tagID,
+    tagID,
     dueDate,
     userID,
     columnID,
@@ -202,7 +203,7 @@ app.post("/tasks", async (req, res) => {
   try {
     const user = await User.findById(userID);
     const column = await Column.findById(columnID);
-    // const tags = await Tag.find(tagID);
+    const tags = await Tag.findById(tagID);
     const task = await new Task({
       title,
       description,
@@ -210,6 +211,7 @@ app.post("/tasks", async (req, res) => {
       dueDate,
       user,
       column,
+      tags,
       comments,
     }).save();
 
@@ -233,7 +235,7 @@ app.put("/tasks/:taskID", async (req, res) => {
     title,
     description,
     link,
-    // tagID,
+    tagID,
     dueDate,
     userID,
     columnID,
@@ -243,13 +245,14 @@ app.put("/tasks/:taskID", async (req, res) => {
   try {
     const user = await User.findById(userID);
     const column = await Column.findById(columnID);
+    const tags = await Tag.findById(tagID);
     const task = await Task.findByIdAndUpdate(
       taskID,
       {
         title,
         description,
         link,
-        // tags,
+        tags,
         dueDate,
         user,
         column,
