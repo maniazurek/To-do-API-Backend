@@ -6,19 +6,21 @@ import cloudinaryFramework from "cloudinary";
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
+dotenv.config();
+
 const cloudinary = cloudinaryFramework.v2;
 
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
-
 cloudinary.config({
-  cloud_name: "dxoaijxeu",
-  api_key: "234932964887826",
-  api_secret: "txTyDzvgE6c6gmzSQfiSwnuQKB8",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// cloudinary.config({
+//   cloud_name: "dxoaijxeu",
+//   api_key: "234932964887826",
+//   api_secret: "txTyDzvgE6c6gmzSQfiSwnuQKB8",
+// });
 
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -30,8 +32,6 @@ const storage = new CloudinaryStorage({
 });
 
 const parser = multer({ storage });
-
-dotenv.config();
 
 const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/todo";
 mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -129,9 +129,9 @@ app.get("/tasks", async (req, res) => {
   const { user, column, tags, page, perPage } = req.query;
 
   const query = {
-    ...(user && { user: new RegExp(`^${user}`, "i") }),
-    ...(column && { column: new RegExp(column, "i") }),
-    ...(tags && { tags: new RegExp(tags, "i") }),
+    ...(user && { user: mongoose.Types.ObjectId(user) }),
+    ...(column && { column: mongoose.Types.ObjectId(column) }),
+    ...(tags && { tags: mongoose.Types.ObjectId(tags) }),
   };
 
   const pageParam = page || 1;
@@ -167,7 +167,7 @@ app.get("/tasks", async (req, res) => {
       {
         $lookup: {
           from: "tags",
-          localField: "tag",
+          localField: "tags",
           foreignField: "_id",
           as: "tags",
         },
@@ -193,7 +193,7 @@ app.post("/tasks", async (req, res) => {
     title,
     description,
     link,
-    tagID,
+    tags,
     dueDate,
     userID,
     columnID,
@@ -203,7 +203,7 @@ app.post("/tasks", async (req, res) => {
   try {
     const user = await User.findById(userID);
     const column = await Column.findById(columnID);
-    const tags = await Tag.findById(tagID);
+    const queriedTags = await Tag.find({ _id: { $in: tags } });
     const task = await new Task({
       title,
       description,
@@ -211,7 +211,7 @@ app.post("/tasks", async (req, res) => {
       dueDate,
       user,
       column,
-      tags,
+      tags: queriedTags,
       comments,
     }).save();
 
