@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import cloudinaryFramework from "cloudinary";
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 
@@ -43,7 +45,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+console.log(crypto.randomBytes(128).toString("hex"));
+
 // Schema & model
+
+const LogSchema = new mongoose.Schema({
+  login: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  accessToken: {
+    type: String,
+    default: () => crypto.randomBytes(128).toString("hex"),
+  },
+});
 
 const TaskSchema = new mongoose.Schema({
   title: {
@@ -118,13 +137,137 @@ const Task = mongoose.model("Task", TaskSchema);
 const User = mongoose.model("User", UserSchema);
 const Tag = mongoose.model("Tag", TagSchema);
 const Column = mongoose.model("Column", ColumnSchema);
+const Log = mongoose.model("Log", LogSchema);
+
+const authenticateLog = async (req, res, next) => {
+  const accessToken = req.header("Authorization");
+
+  try {
+    const log = await Log.findOne({ accessToken });
+
+    if (log) {
+      next();
+    } else {
+      res.status(401).json({
+        data: {
+          message: "Please log in",
+        },
+        success: false,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+};
 
 // Endpoints
+
+// SIGN UP
+
+app.post("/signup", async (req, res) => {
+  const { login, password } = req.body;
+  try {
+    const passwordRegex = new RegExp(/^(?=.*\d.*\d)(?=.*[^A-Za-z\d]).{6,}/i);
+
+    if (passwordRegex.test(password)) {
+      const salt = bcrypt.genSaltSync();
+      const hashedPassword = bcrypt.hashSync(password, salt);
+      const log = await new Log({
+        login,
+        password: hashedPassword,
+      }).save();
+
+      res.status(201).json({
+        data: {
+          _id: log._id,
+          login: log.login,
+          password: log.password,
+        },
+        success: true,
+      });
+    } else {
+      throw {
+        message:
+          "Password must be at least 6 characters long and consist of at least 2 numbers and one special characters",
+      };
+    }
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
+
+app.post("/signin", async (req, res) => {
+  const { login, password } = req.body;
+
+  try {
+    const log = await Log.findOne({ login });
+
+    // v1
+
+    // if (log) {
+    //   if (bcrypt.compareSync(password, log.password)) {
+    //     res.status(200).json({
+    //       data: {
+    //         _id: log._id,
+    //         login: log.login,
+    //         accessToken: log.accessToken,
+    //       },
+    //       success: true,
+    //     });
+    //   } else {
+    //     res.status(404).json({
+    //       data: {
+    //         message: "User not found. Invalid password",
+    //       },
+    //       success: false,
+    //     });
+    //   }
+    // } else {
+    //   res.status(404).json({
+    //     data: {
+    //       message: "User not found. Invalid login",
+    //     },
+    //     success: false,
+    //   });
+    // }
+
+    // v2
+
+    if (log && bcrypt.compareSync(password, log.password)) {
+      res.status(200).json({
+        data: {
+          _id: log._id,
+          login: log.login,
+          accessToken: log.accessToken,
+        },
+      });
+    } else {
+      res.status(404).json({
+        data: {
+          message: "User not found. Login or password did not match",
+        },
+        success: false,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
 
 // TASKS
 
 // taks get
 
+app.get("/tasks", authenticateLog);
 app.get("/tasks", async (req, res) => {
   const { user, column, tags, page, perPage } = req.query;
 
