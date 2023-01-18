@@ -6,19 +6,33 @@
 
 ## Documentation
 
-## 1. **GET** /tasks
+## 1. **POST** /signup
+
+_Body_:
+
+1. login: `String`,
+2. password: `String`
+
+## 2. **POST** /signin
+
+_Body_:
+
+1. login: `String`,
+2. password: `String`
+
+## 3. **GET** /tasks
 
 Should return list of tasks.
 
 _Optional query parameters_:
 
-1. assignee
+1. user
 2. column
 3. tags
 4. page
 5. per page
 
-## 2. **POST** /tasks
+## 4. **POST** /tasks
 
 Should create new task.
 
@@ -29,11 +43,11 @@ _Body_:
 3. link: `String`,
 4. tags: `Array<tagID>`,
 5. dueDate: `Date`,
-6. assignee: `userID`,
+6. user: `userID`,
 7. column: `columnID`,
 8. comments: `Array<String>`
 
-## 3. **PUT** /tasks/:id
+## 5. **PUT** /tasks/:id
 
 Should edit existing task.
 
@@ -48,15 +62,15 @@ _Body_:
 3. link: `String`,
 4. tags: `Array<tagID>`,
 5. dueDate: `Date`,
-6. assignee: `userID`,
+6. user: `userID`,
 7. column: `columnID`,
 8. comments: `Array<String>`
 
-## 4. **GET** /tags
+## 6. **GET** /tags
 
 Should return list of tags.
 
-## 5. **POST** /tags
+## 7. **POST** /tags
 
 Should create new tag.
 
@@ -65,7 +79,7 @@ _Body_:
 1. name: `String`,
 2. color: `String`
 
-## 6. **PUT** /tags/:id
+## 8. **PUT** /tags/:id
 
 Should edit existing tag.
 
@@ -78,11 +92,11 @@ _Body_:
 1. name: `String`,
 2. color: `String`
 
-## 7. **GET** /users
+## 9. **GET** /users
 
 Should return list of users.
 
-## 8.1. **POST** /users
+## 10.1. **POST** /users
 
 Should create new user (with image as string).
 
@@ -92,7 +106,7 @@ _Body_:
 2. description: `String`,
 3. imageURL: `String`
 
-## 8.2. **POST** /users
+## 10.2. **POST** /users
 
 Should create new user (with image as file).
 
@@ -102,7 +116,7 @@ _Form data_:
 2. description: `String`,
 3. imageURL: `String`
 
-## 9.1. **PUT** /users/:id
+## 11.1. **PUT** /users/:id
 
 Should edit existing user (with image as string).
 
@@ -116,7 +130,7 @@ _Body_:
 2. description: `String`,
 3. imageURL: `String`
 
-## 9.2. **PUT** /users/:id
+## 11.2. **PUT** /users/:id
 
 Should edit existing user (with image as file).
 
@@ -130,11 +144,11 @@ _Body_:
 2. description: `String`,
 3. imageURL: `String`
 
-## 10. **GET** /columns
+## 12. **GET** /columns
 
 Should return list of columns.
 
-## 11. **POST** /columns
+## 13. **POST** /columns
 
 Should create new column.
 
@@ -142,7 +156,7 @@ _Body_:
 
 1. name: `String`
 
-## 12. **PUT** /columns/:id
+## 14. **PUT** /columns/:id
 
 Should edit existing column.
 

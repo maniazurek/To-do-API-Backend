@@ -18,12 +18,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// cloudinary.config({
-//   cloud_name: "dxoaijxeu",
-//   api_key: "234932964887826",
-//   api_secret: "txTyDzvgE6c6gmzSQfiSwnuQKB8",
-// });
-
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -44,8 +38,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-console.log(crypto.randomBytes(128).toString("hex"));
 
 // Schema & model
 
@@ -139,33 +131,9 @@ const Tag = mongoose.model("Tag", TagSchema);
 const Column = mongoose.model("Column", ColumnSchema);
 const Log = mongoose.model("Log", LogSchema);
 
-const authenticateLog = async (req, res, next) => {
-  const accessToken = req.header("Authorization");
-
-  try {
-    const log = await Log.findOne({ accessToken });
-
-    if (log) {
-      next();
-    } else {
-      res.status(401).json({
-        data: {
-          message: "Please log in",
-        },
-        success: false,
-      });
-    }
-  } catch (error) {
-    res.status(400).json({
-      data: error,
-      success: false,
-    });
-  }
-};
-
 // Endpoints
 
-// SIGN UP
+// LOG
 
 app.post("/signup", async (req, res) => {
   const { login, password } = req.body;
@@ -208,64 +176,34 @@ app.post("/signin", async (req, res) => {
   try {
     const log = await Log.findOne({ login });
 
-    // v1
-
-    // if (log) {
-    //   if (bcrypt.compareSync(password, log.password)) {
-    //     res.status(200).json({
-    //       data: {
-    //         _id: log._id,
-    //         login: log.login,
-    //         accessToken: log.accessToken,
-    //       },
-    //       success: true,
-    //     });
-    //   } else {
-    //     res.status(404).json({
-    //       data: {
-    //         message: "User not found. Invalid password",
-    //       },
-    //       success: false,
-    //     });
-    //   }
-    // } else {
-    //   res.status(404).json({
-    //     data: {
-    //       message: "User not found. Invalid login",
-    //     },
-    //     success: false,
-    //   });
-    // }
-
-    // v2
-
-    if (log && bcrypt.compareSync(password, log.password)) {
-      res.status(200).json({
-        data: {
-          _id: log._id,
-          login: log.login,
-          accessToken: log.accessToken,
-        },
-      });
+    if (log) {
+      if (bcrypt.compareSync(password, log.password)) {
+        res.status(200).json({
+          data: {
+            _id: log._id,
+            login: log.login,
+            accessToken: log.accessToken,
+          },
+          success: true,
+        });
+      } else {
+        res.status(404).json({
+          data: {
+            message: "User not found. Invalid password",
+          },
+          success: false,
+        });
+      }
     } else {
       res.status(404).json({
         data: {
-          message: "User not found. Login or password did not match",
+          message: "User not found. Invalid login",
         },
         success: false,
       });
     }
-  } catch (error) {
-    res.status(400).json({
-      data: error,
-      success: false,
-    });
-  }
-});
 
 // TASKS
-
-// taks get
 
 app.get("/tasks", authenticateLog);
 app.get("/tasks", async (req, res) => {
@@ -329,8 +267,6 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
-// taks post
-
 app.post("/tasks", async (req, res) => {
   const {
     title,
@@ -369,8 +305,6 @@ app.post("/tasks", async (req, res) => {
     });
   }
 });
-
-// taks put
 
 app.put("/tasks/:taskID", async (req, res) => {
   const { taskID } = req.params;
@@ -476,10 +410,6 @@ app.post("/users", parser.single("image"), async (req, res) => {
     });
   }
 });
-
-// app.post("/users", parser.single("image"), async (req, res) => {
-//   res.json({ imageURL: req.file.path, imageId: req.file.filename });
-// });
 
 // put user v1
 
