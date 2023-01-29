@@ -57,15 +57,9 @@ const LogSchema = new mongoose.Schema({
 });
 
 const TaskSchema = new mongoose.Schema({
-  title: {
-    type: String,
-  },
-  description: {
-    type: String,
-  },
-  link: {
-    type: String,
-  },
+  title: String,
+  description: String,
+  link: String,
   tags: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -84,11 +78,7 @@ const TaskSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Column",
   },
-  comments: [
-    {
-      type: String,
-    },
-  ],
+  comments: [String],
 });
 
 const UserSchema = new mongoose.Schema({
@@ -202,10 +192,16 @@ app.post("/signin", async (req, res) => {
         success: false,
       });
     }
+  } catch (error) {
+    res.status(400).json({
+      data: error,
+      success: false,
+    });
+  }
+});
 
 // TASKS
 
-app.get("/tasks", authenticateLog);
 app.get("/tasks", async (req, res) => {
   const { user, column, tags, page, perPage } = req.query;
 
@@ -312,7 +308,7 @@ app.put("/tasks/:taskID", async (req, res) => {
     title,
     description,
     link,
-    tagID,
+    tags,
     dueDate,
     userID,
     columnID,
@@ -322,14 +318,14 @@ app.put("/tasks/:taskID", async (req, res) => {
   try {
     const user = await User.findById(userID);
     const column = await Column.findById(columnID);
-    const tags = await Tag.findById(tagID);
+    const queriedTags = await Tag.find({ _id: { $in: tags } });
     const task = await Task.findByIdAndUpdate(
       taskID,
       {
         title,
         description,
         link,
-        tags,
+        tags: queriedTags,
         dueDate,
         user,
         column,
